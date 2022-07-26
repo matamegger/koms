@@ -5,7 +5,7 @@ plugins {
     id("maven-publish")
 }
 
-group = "run.threads"
+group = "sh.uffle"
 version = "0.1"
 
 repositories {
