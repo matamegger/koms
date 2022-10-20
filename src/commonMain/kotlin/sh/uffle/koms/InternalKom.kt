@@ -6,7 +6,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import sh.uffle.koms.cosocket.Socket
+import sh.uffle.koms.socket.Socket
 
 sealed class ConnectionState {
     object Connecting : ConnectionState()

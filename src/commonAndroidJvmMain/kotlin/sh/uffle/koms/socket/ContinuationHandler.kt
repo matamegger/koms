@@ -1,11 +1,11 @@
-package sh.uffle.koms.cosocket
+package sh.uffle.koms.socket
 
 import kotlinx.coroutines.CancellableContinuation
 import java.nio.channels.CompletionHandler
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-class ContinuationHandler<T> : CompletionHandler<T, CancellableContinuation<T>> {
+internal class ContinuationHandler<T> : CompletionHandler<T, CancellableContinuation<T>> {
     override fun completed(result: T, attachment: CancellableContinuation<T>) {
         attachment.resume(result)
     }

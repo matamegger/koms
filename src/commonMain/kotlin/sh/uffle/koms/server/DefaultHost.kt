@@ -7,10 +7,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import sh.uffle.koms.*
-import sh.uffle.koms.cosocket.ServerSocket
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.write
+import sh.uffle.koms.socket.DefaultServerSocket
 
 private val protocol = DefaultProtocol()
 
@@ -21,7 +21,7 @@ internal actual class DefaultHost actual constructor(
 ) : Host {
     private val scopeProvider: ScopeProvider = DefaultScopeProvider(coroutineDispatcher)
 
-    private val bundleLock = ReentrantReadWriteLock()
+    private val bundleLock = Mutex()
     private var bundle: HostBundle? = null
 
     override val sessions: List<String>
@@ -35,9 +35,9 @@ internal actual class DefaultHost actual constructor(
 
     override val isRunning: Boolean get() = bundle?.socket?.isOpen == true
 
-    override fun start() {
-        bundleLock.write {
-            val socket = ServerSocket(port, host)
+    override suspend fun start() {
+        bundleLock.withLock {
+            val socket = DefaultServerSocket(port, host)
             socket.open()
             if (socket.isOpen) {
                 //TODO started
@@ -62,7 +62,7 @@ internal actual class DefaultHost actual constructor(
         }
     }
 
-    override fun stop() {
+    override suspend fun stop() {
         bundle?.run {
             scope.cancel()
             socket.close()
@@ -72,7 +72,7 @@ internal actual class DefaultHost actual constructor(
         bundle = null
     }
 
-    override fun send(ids: List<String>, data: Data) {
+    override suspend fun send(ids: List<String>, data: Data) {
         bundle?.run {
             scope.launch {
                 ids.forEach { id -> komManager.get(id)?.send(data) }
@@ -80,7 +80,7 @@ internal actual class DefaultHost actual constructor(
         }
     }
 
-    override fun disconnect(id: String) {
+    override suspend fun disconnect(id: String) {
         bundle?.run {
             scope.launch { komManager.stop(id) }
         }
@@ -88,7 +88,7 @@ internal actual class DefaultHost actual constructor(
 }
 
 private data class HostBundle(
-    val socket: ServerSocket,
+    val socket: DefaultServerSocket,
     val komGate: KomGate,
     val komManager: KomManager,
     val protocol: Protocol,

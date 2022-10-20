@@ -5,16 +5,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import sh.uffle.koms.*
-import sh.uffle.koms.cosocket.Socket
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
+import sh.uffle.koms.socket.DefaultSocket
 
-internal actual class DefaultKom actual constructor(coroutineDispatcher: CoroutineDispatcher) : Kom {
+internal class DefaultKom constructor(coroutineDispatcher: CoroutineDispatcher) : Kom {
     private val scopeProvider: ScopeProvider = DefaultScopeProvider(coroutineDispatcher)
 
-    private val bundleLock = ReentrantReadWriteLock(true)
+    private val bundleLock = Mutex()
     private var bundle: Bundle? = null
 
     private val _komState = MutableStateFlow(KomState.Disconnected)
@@ -23,8 +22,8 @@ internal actual class DefaultKom actual constructor(coroutineDispatcher: Corouti
     private val _messages = MutableSharedFlow<Message>()
     override val messages: SharedFlow<Message> = _messages.asSharedFlow()
 
-    override fun connect(port: Int, host: String) {
-        bundleLock.write {
+    override suspend fun connect(port: Int, host: String) {
+        bundleLock.withLock {
             if (bundle != null) return
             _komState.update { KomState.Connecting }
             bundle = Bundle(
@@ -35,12 +34,9 @@ internal actual class DefaultKom actual constructor(coroutineDispatcher: Corouti
                 scopeProvider.createScope()
             ).apply {
                 setupRelays()
-                scope.launch {
-                    val socket = Socket().apply {
-                        connect(port, host)
-                    }
-                    kom.setSocket(socket)
-                }
+                kom.setSocket(
+                    DefaultSocket().apply { connect(port, host) }
+                )
             }
         }
     }
@@ -52,9 +48,9 @@ internal actual class DefaultKom actual constructor(coroutineDispatcher: Corouti
         scope.launch {
             kom.status.collect {
                 when (it) {
-                    ConnectionState.Connecting -> _komState.update { KomState.Connecting }
+                    is ConnectionState.Connecting -> _komState.update { KomState.Connecting }
                     is ConnectionState.Connected -> _komState.update { KomState.Connected }
-                    ConnectionState.Disconnected -> {
+                    is ConnectionState.Disconnected -> {
                         _komState.update { KomState.Disconnected }
                         disconnect()
                     }
@@ -63,18 +59,16 @@ internal actual class DefaultKom actual constructor(coroutineDispatcher: Corouti
         }
     }
 
-    override fun disconnect() {
-        bundleLock.write {
+    override suspend fun disconnect() {
+        bundleLock.withLock {
             bundle?.kom?.disconnect()
             bundle?.scope?.cancel()
             bundle = null
         }
     }
 
-    override fun send(data: Data) {
-        bundleLock.read {
-            bundle?.run { scope.launch { kom.send(data) } }
-        }
+    override suspend fun send(data: Data) {
+        bundle?.run { scope.launch { kom.send(data) } }
     }
 }
 

@@ -1,6 +1,7 @@
 package sh.uffle.koms
 
-import sh.uffle.koms.cosocket.Socket
+import sh.uffle.koms.socket.Socket
+import sh.uffle.koms.socket.read
 
 internal suspend fun Socket.readDataOrNull(): Data? {
     val sizeBuffer = readOrNull(4) ?: return null

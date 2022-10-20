@@ -20,16 +20,16 @@ interface Host {
     val events: SharedFlow<KomEvent>
     val isRunning: Boolean
 
-    fun start()
-    fun stop()
-    fun send(ids: List<String>, data: Data)
+    suspend fun start()
+    suspend fun stop()
+    suspend fun send(ids: List<String>, data: Data)
 
-    fun disconnect(id: String)
+    suspend fun disconnect(id: String)
 }
 
-fun Host.send(data: Data) = send(sessions, data)
+suspend fun Host.send(data: Data) = send(sessions, data)
 
-fun Host.send(id: String, data: Data) = send(listOf(id), data)
+suspend fun Host.send(id: String, data: Data) = send(listOf(id), data)
 
 internal expect class DefaultHost(
     port: Int,
