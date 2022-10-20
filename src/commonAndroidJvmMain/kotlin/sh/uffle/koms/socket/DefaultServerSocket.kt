@@ -1,17 +1,19 @@
-package sh.uffle.koms.cosocket
+package sh.uffle.koms.socket
 
 import kotlinx.coroutines.suspendCancellableCoroutine
-import sh.uffle.koms.InetSocketAddress
 
 import java.nio.channels.AsynchronousServerSocketChannel
 import java.nio.channels.AsynchronousSocketChannel
 
-class ServerSocket(val port: Int, val host: String? = null) {
+internal actual class DefaultServerSocket(
+    override val port: Int,
+    override val host: String? = null
+) : ServerSocket {
     private var socket: AsynchronousServerSocketChannel? = null
 
-    val isOpen: Boolean get() = socket?.isOpen == true && socket?.localAddress != null
+    override val isOpen: Boolean get() = socket?.isOpen == true && socket?.localAddress != null
 
-    fun open() {
+    override fun open() {
         socket = socket ?: AsynchronousServerSocketChannel.open()
         socket?.let {
             if (it.isOpen) {
@@ -20,11 +22,11 @@ class ServerSocket(val port: Int, val host: String? = null) {
         }
     }
 
-    fun close() {
+    override fun close() {
         socket?.close()
     }
 
-    suspend fun accept() = suspendCancellableCoroutine<AsynchronousSocketChannel> { continuation ->
+    override suspend fun accept() = suspendCancellableCoroutine { continuation ->
         socket?.accept(continuation, ContinuationHandler<AsynchronousSocketChannel>())
-    }.let { Socket(it) }
+    }.let { DefaultSocket(it) }
 }

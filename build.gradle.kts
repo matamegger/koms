@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version "1.7.0"
+    kotlin("multiplatform") version "1.7.20"
     id("com.android.library")
     id("kotlin-android-extensions")
     id("maven-publish")
@@ -27,7 +27,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
+                implementation("com.benasher44:uuid:0.5.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
             }
         }
         val commonTest by getting {
@@ -56,11 +57,11 @@ kotlin {
 }
 
 android {
-    compileSdkVersion(29)
+    compileSdkVersion(33)
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
-        minSdkVersion(24)
-        targetSdkVersion(29)
+        minSdkVersion(26)
+        targetSdkVersion(33)
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8

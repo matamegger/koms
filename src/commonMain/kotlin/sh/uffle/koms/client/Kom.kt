@@ -7,16 +7,16 @@ import kotlinx.coroutines.flow.StateFlow
 import sh.uffle.koms.Data
 import sh.uffle.koms.Message
 
-val CLIENT_VERSION: Int = 0
+const val CLIENT_VERSION: Int = 0
 
 fun Kom(coroutineDispatcher: CoroutineDispatcher = Dispatchers.IO): Kom = DefaultKom(coroutineDispatcher)
 
 interface Kom {
     val komState: StateFlow<KomState>
     val messages: SharedFlow<Message>
-    fun connect(port: Int, host: String)
-    fun disconnect()
-    fun send(data: Data)
+    suspend fun connect(port: Int, host: String)
+    suspend fun disconnect()
+    suspend fun send(data: Data)
 }
 
 enum class KomState {
@@ -26,4 +26,3 @@ enum class KomState {
 }
 
 
-internal expect class DefaultKom(coroutineDispatcher: CoroutineDispatcher) : Kom

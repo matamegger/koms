@@ -3,7 +3,7 @@ package sh.uffle.koms
 import CLIENT_HANDSHAKE
 import KOMS
 import SERVER_HANDSHAKE
-import sh.uffle.koms.cosocket.Socket
+import sh.uffle.koms.socket.Socket
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
