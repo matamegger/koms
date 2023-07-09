@@ -8,9 +8,9 @@ internal interface Protocol {
     val clientHandshake: Handshake
 }
 
-internal class DefaultProtocol(
-    timeout: Duration = 1.seconds
+internal class ClientFirstProtocol(
+    timeout: Duration = 1.seconds,
 ) : Protocol {
-    override val serverHandshake: Handshake = ServerHandshake(timeout)
-    override val clientHandshake: Handshake = ClientHandshake(timeout)
+    override val serverHandshake: Handshake = ServerHandshakeWithClientFirstMove(timeout)
+    override val clientHandshake: Handshake = ClientHandshakeWithClientFirstMove(timeout)
 }

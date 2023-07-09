@@ -7,5 +7,5 @@ internal interface ServerSocket {
     fun open()
     fun close()
 
-    suspend fun accept(): DefaultSocket
+    suspend fun accept(): Socket
 }

@@ -5,12 +5,12 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import sh.uffle.koms.ScopeProvider
-import sh.uffle.koms.socket.DefaultServerSocket
+import sh.uffle.koms.socket.KomServerSocket
 
 internal class KomGate(
-    val server: DefaultServerSocket,
+    val server: KomServerSocket,
     val komManager: KomManager,
-    val scopeProvider: ScopeProvider
+    val scopeProvider: ScopeProvider,
 ) {
     private val scope = scopeProvider.createScope("KomGate")
 

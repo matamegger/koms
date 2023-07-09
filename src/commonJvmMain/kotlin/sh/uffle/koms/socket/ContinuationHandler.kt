@@ -1,4 +1,4 @@
-package sh.uffle.koms.socket
+package sh.uffle.koms.internal.socket
 
 import kotlinx.coroutines.CancellableContinuation
 import java.nio.channels.CompletionHandler
