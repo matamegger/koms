@@ -1,14 +1,18 @@
 package sh.uffle.koms
 
-import CLIENT_HANDSHAKE
-import KOMS
-import SERVER_HANDSHAKE
+import sh.uffle.koms.client.CLIENT_VERSION
+import sh.uffle.koms.server.SERVER_VERSION
 import sh.uffle.koms.socket.Socket
+import sh.uffle.koms.socket.readOrNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+internal val KOMS: ByteArray = "KOMS".toByteArray()
+internal val SERVER_HANDSHAKE = KOMS.toMutableList().plus(SERVER_VERSION.asByteList()).toByteArray()
+internal val CLIENT_HANDSHAKE = KOMS.toMutableList().plus(CLIENT_VERSION.asByteList()).toByteArray()
+
 internal sealed class HandshakeResult {
-    object Failed : HandshakeResult()
+    object Failure : HandshakeResult()
     data class Success(val remoteVersion: Int) : HandshakeResult()
 }
 
@@ -16,29 +20,28 @@ internal interface Handshake {
     suspend fun handshake(socket: Socket): HandshakeResult
 }
 
-internal class ServerHandshake(private val timeout: Duration = 1.seconds) : Handshake {
+internal class ServerHandshakeWithClientFirstMove(private val timeout: Duration = 1.seconds) : Handshake {
     override suspend fun handshake(socket: Socket): HandshakeResult {
-        if (socket.write(SERVER_HANDSHAKE) < 0) {
-            return HandshakeResult.Failed
+        val clientVersion = socket.receiveHandshake(timeout)
+        if (runCatching { socket.write(SERVER_HANDSHAKE) }.getOrDefault(0) < 8) {
+            return HandshakeResult.Failure
         }
-        val clientVersion = socket.receiveHandshake()
-
-        return if (clientVersion != null) HandshakeResult.Success(clientVersion) else HandshakeResult.Failed
+        return if (clientVersion != null) HandshakeResult.Success(clientVersion) else HandshakeResult.Failure
     }
 }
 
-internal class ClientHandshake(private val timeout: Duration = 1.seconds) : Handshake {
+internal class ClientHandshakeWithClientFirstMove(private val timeout: Duration = 1.seconds) : Handshake {
     override suspend fun handshake(socket: Socket): HandshakeResult {
-        if (socket.write(CLIENT_HANDSHAKE) < 0) {
-            return HandshakeResult.Failed
+        if (runCatching { socket.write(CLIENT_HANDSHAKE) }.getOrDefault(0) < 8) {
+            return HandshakeResult.Failure
         }
-        val serverVersion = socket.receiveHandshake()
+        val serverVersion = runCatching { socket.receiveHandshake(timeout) }.getOrNull()
 
-        return if (serverVersion != null) HandshakeResult.Success(serverVersion) else HandshakeResult.Failed
+        return if (serverVersion != null) HandshakeResult.Success(serverVersion) else HandshakeResult.Failure
     }
 }
 
-private suspend fun Socket.receiveHandshake() = readOrNull(8)
+private suspend fun Socket.receiveHandshake(timeout: Duration) = readOrNull(8, timeout)
     ?.takeIf {
         it.take(4).toByteArray().contentEquals(KOMS)
     }

@@ -2,7 +2,7 @@ package sh.uffle.koms
 
 data class Message(
     val sender: String,
-    val data: Data
+    val data: Data,
 )
 
 data class Data(val bytes: ByteArray) {
@@ -12,9 +12,7 @@ data class Data(val bytes: ByteArray) {
 
         other as Data
 
-        if (!bytes.contentEquals(other.bytes)) return false
-
-        return true
+        return bytes.contentEquals(other.bytes)
     }
 
     override fun hashCode(): Int {

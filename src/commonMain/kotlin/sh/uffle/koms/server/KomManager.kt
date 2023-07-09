@@ -6,41 +6,45 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import sh.uffle.koms.*
-import sh.uffle.koms.socket.Socket
-
+import sh.uffle.koms.BaseKom
+import sh.uffle.koms.ConnectionState
+import sh.uffle.koms.Message
+import sh.uffle.koms.ScopeProvider
+import sh.uffle.koms.socket.KomSocket
 
 internal class KomManager(
     private val scopeProvider: ScopeProvider,
-    private val protocol: Protocol
+    private val createBaseKom: (socket: KomSocket) -> BaseKom,
 ) {
     private val komsLock = Mutex()
     private var koms: Map<String, KomHolder> = mapOf()
+    private var disposed = false
 
     val activeIds
         get() = koms
             .filter { it.value.kom.status.value is ConnectionState.Connected }
             .map { it.key }
 
-
     val registeredIds get() = koms.map { it.key }
 
     private val _messages = MutableSharedFlow<Message>()
     val messages = _messages.asSharedFlow()
 
-    private val _events = MutableSharedFlow<KomEvent>()
+    private val _events = MutableSharedFlow<KomManagerEvent>()
     val events = _events.asSharedFlow()
 
-    suspend fun create(socket: Socket) {
+    suspend fun create(socket: KomSocket) {
+        if (disposed) {
+            socket.close()
+            return
+        }
         val komHolder = KomHolder(
-            InternalKom(
-                protocol.serverHandshake,
-                scopeProvider
-            ),
-            scopeProvider.createScope()
+            createBaseKom(socket),
+            scopeProvider.createScope(),
         )
         komsLock.withLock {
             val id = getId()
@@ -48,7 +52,6 @@ internal class KomManager(
                 addStatusWatcher(id)
                 addMessageRelay(id)
             }
-            komHolder.kom.setSocket(socket)
             koms += id to komHolder
         }
     }
@@ -57,18 +60,21 @@ internal class KomManager(
         koms[id]?.kom?.disconnect()
     }
 
-    private fun remove(id: String) {
+    private suspend fun remove(id: String) {
         koms[id]?.run {
             koms = koms - id
+            if (disposed && koms.isEmpty()) {
+                _events.emit(KomManagerEvent.Disposed)
+            }
             scope.cancel()
-            kom.disconnect()
         }
     }
 
-    fun get(id: String): InternalKom? = koms[id]?.kom
+    fun get(id: String): BaseKom? = koms[id]?.kom
 
     fun dispose() {
-        koms.keys.toList().forEach(::remove)
+        disposed = true
+        koms.values.toList().forEach { it.kom.disconnect() }
     }
 
     private fun getId(): String {
@@ -83,22 +89,31 @@ internal class KomManager(
         kom.status.collect {
             when (it) {
                 is ConnectionState.Disconnected -> {
-                    _events.emit(KomEvent.Disconnected(id))
+                    _events.emit(KomManagerEvent.KomDisconnected(id))
                     remove(id)
                 }
 
-                is ConnectionState.Connected -> _events.emit(KomEvent.Connected(id))
+                is ConnectionState.Connected -> _events.emit(KomManagerEvent.KomConnected(id))
                 else -> Unit
             }
         }
     }
 
     private fun KomHolder.addMessageRelay(id: String) = scope.launch {
-        kom.messages.collect { _messages.emit(Message(id, it)) }
+        while (coroutineContext.isActive) {
+            val message = kom.read() ?: continue
+            _messages.emit(Message(id, message))
+        }
     }
 }
 
 private data class KomHolder(
-    val kom: InternalKom,
-    val scope: CoroutineScope
+    val kom: BaseKom,
+    val scope: CoroutineScope,
 )
+
+internal sealed interface KomManagerEvent {
+    data class KomConnected(val id: String) : KomManagerEvent
+    data class KomDisconnected(val id: String) : KomManagerEvent
+    object Disposed : KomManagerEvent
+}
