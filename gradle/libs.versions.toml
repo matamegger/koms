@@ -1,6 +1,6 @@
 [versions]
 pluginAndroid = "7.4.2"
-kotlin = "1.8.22"
+kotlin = "1.9.0"
 kotlinx-coroutines = "1.6.4"
 uuid = "0.7.0"
 

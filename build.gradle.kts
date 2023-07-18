@@ -24,7 +24,7 @@ kotlin {
         jvmToolchain(11)
     }
 
-    android {
+    androidTarget {
         jvmToolchain(11)
     }
     sourceSets {
