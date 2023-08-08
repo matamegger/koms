@@ -1,3 +1,5 @@
+!!! This project is currently in an incubating phase. API surface, functionality and tool set might change. !!!
+
 # Koms
 
 Koms is a TCP socket based communication library written in Kotlin and setup to be a Kotlin multiplatform library.
