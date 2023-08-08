@@ -2,17 +2,17 @@
 pluginAndroid = "7.4.2"
 kotlin = "1.9.0"
 kotlinx-coroutines = "1.7.1"
-uuid = "0.7.0"
+uuid = "0.8.0"
 
 # Plugin versions
-pluginKtlint = "11.4.0"
+pluginKtlint = "11.5.1"
 ktlint = "0.49.1"
-pluginKover = "0.7.1"
+pluginKover = "0.7.3"
 
 # Test versions
 kotest = "5.6.2"
 junit = "5.10.0"
-strikt = "0.33.0"
+strikt = "0.34.1"
 turbine = "1.0.0"
 
 [libraries]
