@@ -31,6 +31,17 @@ interface Host {
     suspend fun disconnect(id: String)
 }
 
+suspend fun Host.disconnect(ids: List<String>) = ids.forEach { disconnect(it) }
+
+suspend fun <R> Host.sequentialMessaging(
+    receiver: String,
+    block: suspend (SequentialMessagingBlock.() -> R)
+): R = sequentialMessaging(listOf(receiver), block)
+
+suspend fun <R> Host.sequentialMessaging(receiver: List<String>, block: suspend (SequentialMessagingBlock.() -> R)): R {
+    return SequentialMessagingBlock(this, receiver).block()
+}
+
 suspend fun Host.send(data: Data) = send(sessions, data)
 
 suspend fun Host.send(id: String, data: Data) = send(listOf(id), data)
