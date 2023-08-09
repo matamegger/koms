@@ -35,7 +35,7 @@ suspend fun Host.disconnect(ids: List<String>) = ids.forEach { disconnect(it) }
 
 suspend fun <R> Host.sequentialMessaging(
     receiver: String,
-    block: suspend (SequentialMessagingBlock.() -> R)
+    block: suspend (SequentialMessagingBlock.() -> R),
 ): R = sequentialMessaging(listOf(receiver), block)
 
 suspend fun <R> Host.sequentialMessaging(receiver: List<String>, block: suspend (SequentialMessagingBlock.() -> R)): R {
