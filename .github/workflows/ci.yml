@@ -47,7 +47,7 @@ jobs:
         run: ./gradlew allTests
 
       - name: Display unit test results
-        uses: mikepenz/action-junit-report@v3
+        uses: mikepenz/action-junit-report@v4
         if: always()
         with:
           check_name: 'Tests results'
