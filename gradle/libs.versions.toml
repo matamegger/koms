@@ -11,7 +11,7 @@ pluginKover = "0.7.3"
 
 # Test versions
 kotest = "5.8.0"
-junit = "5.10.0"
+junit = "5.10.2"
 strikt = "0.34.1"
 turbine = "1.0.0"
 
