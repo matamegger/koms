@@ -8,12 +8,6 @@ The main focus is on asynchronous communication, where the send messages are not
 
 ## Get started
 
-```kts
-dependencies {
-    implementation("sh.uffle.koms:koms:0.1.0")
-}
-```
-
 ### Host setup
 
 Similar to pure sockets, first a host has to be started
