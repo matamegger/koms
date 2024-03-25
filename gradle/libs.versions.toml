@@ -1,5 +1,5 @@
 [versions]
-pluginAndroid = "7.4.2"
+pluginAndroid = "8.3.1"
 kotlin = "1.9.0"
 kotlinx-coroutines = "1.8.0"
 uuid = "0.8.2"
