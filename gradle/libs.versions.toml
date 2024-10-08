@@ -12,7 +12,7 @@ pluginKover = "0.7.6"
 # Test versions
 kotest = "5.9.1"
 junit = "5.11.2"
-strikt = "0.34.1"
+strikt = "0.35.1"
 turbine = "1.1.0"
 
 [libraries]
